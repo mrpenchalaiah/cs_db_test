@@ -1,4 +1,4 @@
-module github.com/go-sql-driver/mysql 
+module github.com/mrpenchalaiah/cs_db_test 
 
 go 1.18
 
