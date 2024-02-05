@@ -1,4 +1,4 @@
-package mysql
+package cs_db_test
 
 import (
 	"context"

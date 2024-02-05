@@ -8,7 +8,7 @@
 //go:build !go1.19
 // +build !go1.19
 
-package mysql
+package cs_db_test
 
 import "sync/atomic"
 

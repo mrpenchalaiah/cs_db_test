@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package mysql
+package cs_db_test
 
 import "database/sql/driver"
 
@@ -15,9 +15,8 @@ import "database/sql/driver"
 // This is accessible by executing statements using sql.Conn.Raw() and
 // downcasting the returned result:
 //
-//    res, err := rawConn.Exec(...)
-//    res.(mysql.Result).AllRowsAffected()
-//
+//	res, err := rawConn.Exec(...)
+//	res.(mysql.Result).AllRowsAffected()
 type Result interface {
 	driver.Result
 	// AllRowsAffected returns a slice containing the affected rows for each
