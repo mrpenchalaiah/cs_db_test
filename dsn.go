@@ -451,8 +451,17 @@ func getAzureClientToken() string {
 }
 
 func updateToken(cnf *Config) {
+	tokenRefreshTime := os.Getenv("AZURE_TOKEN_REFRESH_TIME")
+	if len(tokenRefreshTime) == 0 {
+		tokenRefreshTime = "30m"
+	}
 	for {
-		time.Sleep(15 * time.Minute)
+		duration, err := time.ParseDuration(tokenRefreshTime)
+		if err != nil {
+			fmt.Printf("error while parsing the duration %v", err)
+			duration = 30 * time.Minute
+		}
+		time.Sleep(duration)
 		cnf.Passwd = getAzureClientToken()
 	}
 
