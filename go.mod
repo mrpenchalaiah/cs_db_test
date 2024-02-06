@@ -1,4 +1,4 @@
-module github.com/mrpenchalaiah/cs_db_test 
+module github.com/mrpenchalaiah/mysql 
 
 go 1.18
 
