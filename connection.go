@@ -18,12 +18,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"fmt"
-	"os"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
 type mysqlConn struct {
@@ -48,48 +42,6 @@ type mysqlConn struct {
 	finished chan<- struct{}
 	canceled atomicError // set non-nil if conn is canceled
 	closed   atomicBool  // set when conn is closed, before closech is closed
-}
-
-func updateToken(cnf *Config, cred *azidentity.ClientSecretCredential) {
-	for {
-		time.Sleep(15 * time.Minute)
-		ctx := context.TODO()
-		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-			Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
-		})
-		if err != nil {
-			fmt.Printf("get token is failed %v", err)
-		}
-		fmt.Printf("token is %v", token.Token)
-		cnf.Passwd = token.Token
-	}
-
-}
-
-func (mc *mysqlConn) AddPasswordToken() {
-	clientid := os.Getenv("AZURE_MYSQL_CLIENTID")
-	tenantid := os.Getenv("AZURE_MYSQL_TENANTID")
-	clientsecret := os.Getenv("AZURE_MYSQL_CLIENTSECRET")
-	cred, err := azidentity.NewClientSecretCredential(tenantid, clientid, clientsecret, &azidentity.ClientSecretCredentialOptions{})
-
-	if err != nil {
-		fmt.Printf("Identity failed %v", err)
-	}
-
-	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	// if cancel != nil {
-
-	//}
-	ctx := context.TODO()
-	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
-	})
-	if err != nil {
-		fmt.Printf("get token is failed %v", err)
-	}
-	fmt.Printf("token is %v", token.Token)
-	go updateToken(mc.cfg, cred)
-	mc.cfg.Passwd = token.Token
 }
 
 // Handles parameters set in DSN after the connection is established

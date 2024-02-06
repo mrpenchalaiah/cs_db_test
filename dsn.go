@@ -10,6 +10,7 @@ package mysql
 
 import (
 	"bytes"
+	"context"
 	"crypto/rsa"
 	"crypto/tls"
 	"errors"
@@ -17,15 +18,14 @@ import (
 	"math/big"
 	"net"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-)
 )
 
 var (
@@ -386,7 +386,7 @@ func ParseDSN(dsn string) (cfg *Config, err error) {
 		}
 	}
 
-	AddPasswordToken(&cfg)
+	AddPasswordToken(cfg)
 
 	if !foundSlash && len(dsn) > 0 {
 		return nil, errInvalidDSNNoSlash
