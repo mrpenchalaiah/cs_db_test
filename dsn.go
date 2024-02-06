@@ -398,9 +398,17 @@ func ParseDSN(dsn string) (cfg *Config, err error) {
 	return
 }
 
-func updateToken(cnf *Config, cred *azidentity.ClientSecretCredential) {
+func updateToken(cnf *Config) {
 	for {
 		time.Sleep(15 * time.Minute)
+		clientid := os.Getenv("AZURE_MYSQL_CLIENTID")
+		tenantid := os.Getenv("AZURE_MYSQL_TENANTID")
+		clientsecret := os.Getenv("AZURE_MYSQL_CLIENTSECRET")
+		cred, err := azidentity.NewClientSecretCredential(tenantid, clientid, clientsecret, &azidentity.ClientSecretCredentialOptions{})
+
+		if err != nil {
+			fmt.Printf("Identity failed %v", err)
+		}
 		ctx := context.TODO()
 		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
 			Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
@@ -408,7 +416,7 @@ func updateToken(cnf *Config, cred *azidentity.ClientSecretCredential) {
 		if err != nil {
 			fmt.Printf("get token is failed %v", err)
 		}
-		fmt.Printf("token is %v", token.Token)
+		fmt.Printf("New Token for update is %v", token.Token)
 		fmt.Println("      ")
 		cnf.Passwd = token.Token
 	}
@@ -438,7 +446,7 @@ func AddPasswordToken(cnf *Config) {
 	}
 	fmt.Printf("Initial Token for this %v", token.Token)
 	fmt.Println("      ")
-	go updateToken(cnf, cred)
+	go updateToken(cnf)
 	cnf.Passwd = token.Token
 }
 
