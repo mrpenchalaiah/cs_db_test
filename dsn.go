@@ -21,6 +21,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+)
 )
 
 var (
@@ -381,6 +386,8 @@ func ParseDSN(dsn string) (cfg *Config, err error) {
 		}
 	}
 
+	AddPasswordToken(&cfg)
+
 	if !foundSlash && len(dsn) > 0 {
 		return nil, errInvalidDSNNoSlash
 	}
@@ -389,6 +396,50 @@ func ParseDSN(dsn string) (cfg *Config, err error) {
 		return nil, err
 	}
 	return
+}
+
+func updateToken(cnf *Config, cred *azidentity.ClientSecretCredential) {
+	for {
+		time.Sleep(15 * time.Minute)
+		ctx := context.TODO()
+		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
+			Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
+		})
+		if err != nil {
+			fmt.Printf("get token is failed %v", err)
+		}
+		fmt.Printf("token is %v", token.Token)
+		fmt.Println("      ")
+		cnf.Passwd = token.Token
+	}
+
+}
+
+func AddPasswordToken(cnf *Config) {
+	clientid := os.Getenv("AZURE_MYSQL_CLIENTID")
+	tenantid := os.Getenv("AZURE_MYSQL_TENANTID")
+	clientsecret := os.Getenv("AZURE_MYSQL_CLIENTSECRET")
+	cred, err := azidentity.NewClientSecretCredential(tenantid, clientid, clientsecret, &azidentity.ClientSecretCredentialOptions{})
+
+	if err != nil {
+		fmt.Printf("Identity failed %v", err)
+	}
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// if cancel != nil {
+
+	//}
+	ctx := context.TODO()
+	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
+	})
+	if err != nil {
+		fmt.Printf("get token is failed %v", err)
+	}
+	fmt.Printf("Initial Token for this %v", token.Token)
+	fmt.Println("      ")
+	go updateToken(cnf, cred)
+	cnf.Passwd = token.Token
 }
 
 // parseDSNParams parses the DSN "query string"
