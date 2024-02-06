@@ -398,56 +398,71 @@ func ParseDSN(dsn string) (cfg *Config, err error) {
 	return
 }
 
-func updateToken(cnf *Config) {
-	for {
-		time.Sleep(15 * time.Minute)
-		clientid := os.Getenv("AZURE_MYSQL_CLIENTID")
-		tenantid := os.Getenv("AZURE_MYSQL_TENANTID")
-		clientsecret := os.Getenv("AZURE_MYSQL_CLIENTSECRET")
+func getAzureClientToken() string {
+	clientid := os.Getenv("AZURE_MYSQL_CLIENTID")
+	identityclientid := os.Getenv("AZURE_MYSQL_IDENTITY_CLIENTID")
+	tenantid := os.Getenv("AZURE_MYSQL_TENANTID")
+	clientsecret := os.Getenv("AZURE_MYSQL_CLIENTSECRET")
+	scope := []string{"https://ossrdbms-aad.database.windows.net/.default"}
+	ctx := context.TODO()
+	if len(tenantid) != 0 {
+		fmt.Printf("We are using Service Principal with the client %v and tenantId %v \n", clientid, tenantid)
 		cred, err := azidentity.NewClientSecretCredential(tenantid, clientid, clientsecret, &azidentity.ClientSecretCredentialOptions{})
-
 		if err != nil {
 			fmt.Printf("Identity failed %v", err)
+			panic(err)
 		}
-		ctx := context.TODO()
 		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-			Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
+			Scopes: scope,
 		})
 		if err != nil {
 			fmt.Printf("get token is failed %v", err)
+			panic(err)
 		}
-		fmt.Printf("New Token for update is %v", token.Token)
-		fmt.Println("      ")
-		cnf.Passwd = token.Token
+		return token.Token
+	}
+	if len(identityclientid) != 0 {
+		fmt.Printf("We are using ManagedIdentity with the client %v \n", identityclientid)
+		options := azidentity.ManagedIdentityCredentialOptions{ID: azidentity.ClientID(identityclientid)}
+		cred, err := azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			fmt.Printf("clientIdentity error token error %v", err)
+			panic(err)
+		}
+		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{Scopes: scope})
+		if err != nil {
+			fmt.Printf("get token is failed  %v", err)
+			panic(err)
+		}
+		return token.Token
+	}
+	fmt.Printf("We are using ManagedIdentity with pod default clientId \n")
+	cred, err := azidentity.NewManagedIdentityCredential(nil)
+	if err != nil {
+		fmt.Printf("managed identity token eror %v", err)
+		panic(err)
+	}
+
+	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{Scopes: scope})
+	if err != nil {
+		fmt.Printf("get token is failed in managed identity %v", err)
+	}
+	return token.Token
+}
+
+func updateToken(cnf *Config) {
+	for {
+		time.Sleep(15 * time.Minute)
+		cnf.Passwd = getAzureClientToken()
 	}
 
 }
 
 func AddPasswordToken(cnf *Config) {
-	clientid := os.Getenv("AZURE_MYSQL_CLIENTID")
-	tenantid := os.Getenv("AZURE_MYSQL_TENANTID")
-	clientsecret := os.Getenv("AZURE_MYSQL_CLIENTSECRET")
-	cred, err := azidentity.NewClientSecretCredential(tenantid, clientid, clientsecret, &azidentity.ClientSecretCredentialOptions{})
-
-	if err != nil {
-		fmt.Printf("Identity failed %v", err)
-	}
-
-	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	// if cancel != nil {
-
-	//}
-	ctx := context.TODO()
-	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
-	})
-	if err != nil {
-		fmt.Printf("get token is failed %v", err)
-	}
-	fmt.Printf("Initial Token for this %v", token.Token)
-	fmt.Println("      ")
+	token := getAzureClientToken()
+	fmt.Println("Initial Token get from azure ")
 	go updateToken(cnf)
-	cnf.Passwd = token.Token
+	cnf.Passwd = token
 }
 
 // parseDSNParams parses the DSN "query string"
