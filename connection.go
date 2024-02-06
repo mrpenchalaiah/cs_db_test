@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package cs_db_test
+package mysql
 
 import (
 	"context"
@@ -51,16 +51,19 @@ type mysqlConn struct {
 }
 
 func updateToken(cnf *Config, cred *azidentity.ClientSecretCredential) {
-	time.Sleep(10 * time.Minute)
-	ctx := context.TODO()
-	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
-	})
-	if err != nil {
-		fmt.Printf("get token is failed %v", err)
+	for {
+		time.Sleep(15 * time.Minute)
+		ctx := context.TODO()
+		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
+			Scopes: []string{"https://ossrdbms-aad.database.windows.net/.default"},
+		})
+		if err != nil {
+			fmt.Printf("get token is failed %v", err)
+		}
+		fmt.Printf("token is %v", token.Token)
+		cnf.Passwd = token.Token
 	}
-	fmt.Printf("token is %v", token.Token)
-	cnf.Passwd = token.Token
+
 }
 
 func (mc *mysqlConn) AddPasswordToken() {

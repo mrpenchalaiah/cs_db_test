@@ -9,7 +9,7 @@
 //go:build !linux && !darwin && !dragonfly && !freebsd && !netbsd && !openbsd && !solaris && !illumos
 // +build !linux,!darwin,!dragonfly,!freebsd,!netbsd,!openbsd,!solaris,!illumos
 
-package cs_db_test
+package mysql
 
 import "net"
 

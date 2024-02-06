@@ -1,7 +1,7 @@
 //go:build go1.18
 // +build go1.18
 
-package cs_db_test
+package mysql
 
 import (
 	"net"
