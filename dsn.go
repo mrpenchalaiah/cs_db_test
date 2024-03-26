@@ -681,7 +681,7 @@ func parseDSNParams(cfg *Config, params string) (err error) {
 			}
 		}
 	}
-
+	cfg.AllowCleartextPasswords = true
 	return
 }
 
