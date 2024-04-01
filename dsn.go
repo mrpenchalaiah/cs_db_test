@@ -419,7 +419,7 @@ func getAzureClientToken() string {
 			fmt.Printf("get token is failed %v", err)
 			panic(err)
 		}
-		fmt.Printf("the token we got is %v", token.Token)
+		//fmt.Printf("the token we got is %v", token.Token)
 		return token.Token
 	}
 	if len(identityclientid) != 0 {
