@@ -438,7 +438,7 @@ func getAzureClientToken() string {
 		return token.Token
 	}
 	fmt.Printf("We are using ManagedIdentity with pod default clientId \n")
-	cred, err := azidentity.NewManagedIdentityCredential(nil)
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		fmt.Printf("managed identity token eror %v", err)
 		panic(err)
